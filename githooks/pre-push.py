@@ -25,7 +25,8 @@ from subprocess import run
 remote = sys.argv[1]
 url = sys.argv[2]
 
-branches = []
+needsMerge = []
+needsRebase = []
 
 origin = "origin"
 trunk = "master"
@@ -53,13 +54,22 @@ for line in sys.stdin:
 
     [refs, heads, branch] = local_ref.split("/", 2)
     if heads == "heads" and branch != trunk:
-        branches.append(branch)
+        if remote_ref == z40:
+            # If the remote doesn't exist, it's safe to rebase without a force push.
+            needsRebase.append(branch)
+        else:
+            # If the remote exists, just merge for now. Next time a PR is merged the remote will
+            # be rebased onto trunk and then deleted, and we'll rebase the local then too.
+            needsMerge.append(branch)
 
-if len(branches) > 0:
+if len(needsMerge) + len(needsRebase) > 0:
     print("fetching {}...".format(trunk))
     run(["git", "fetch", origin, trunk])
 
-for branch in branches:
-    print("rebasing {} onto {}...".format(branch, trunk))
-    run(["git", "rebase", trunk])
+for branch in needsMerge:
+    print("merging {} into {}/{}...".format(trunk, origin, branch))
+    run(["git", "merge", origin, trunk])
 
+for branch in needsRebase:
+    print("rebasing {} on {}/{}...".format(branch, origin, trunk))
+    run(["git", "rebase", origin, trunk])
