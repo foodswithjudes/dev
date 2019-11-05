@@ -55,11 +55,14 @@ for line in sys.stdin:
     [refs, heads, branch] = local_ref.split("/", 2)
     if heads == "heads" and branch != trunk:
         if remote_ref == z40:
-            # If the remote doesn't exist, it's safe to rebase without a force push.
+            # If the remote doesn't exist, it's safe to rebase without a force
+            # push.
             needsRebase.append(branch)
         else:
-            # If the remote exists, just merge for now. Next time a PR is merged the remote will
-            # be rebased onto trunk and then deleted, and we'll rebase the local then too.
+            # If the remote exists, just merge for now. Next time a PR is merged
+            # the remote will
+            # be rebased onto trunk and then deleted, and we'll rebase the local
+            # then too.
             needsMerge.append(branch)
 
 if len(needsMerge) + len(needsRebase) > 0:
