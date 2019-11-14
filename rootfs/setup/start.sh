@@ -18,14 +18,14 @@ if ! [ $(id -u dev) = $USER_UID ] || ! [ $(id -g dev) = $USER_GID ]; then
   chown -R dev:dev /home/dev /go
 fi
 
-# Clone the repository if it wasn't mounted into /src
-# if [ ! -d "/src" ]
+# Clone the repository if it wasn't mounted into /fwj
+# if [ ! -d "/fwj" ]
 # then
-#   echo "/src is empty - cloning repository..."
-#   git clone https://github.com/katcheCode/foodswithjudes.git /src
+#   echo "/fwj is empty - cloning repository..."
+#   git clone https://github.com/katcheCode/foodswithjudes.git /fwj
 # fi
 
 # Kick off final shell as the user.
-cd /src
+cd /fwj
 exec sudo -E --preserve-env=PATH -u dev "$USER_SHELL"
 
