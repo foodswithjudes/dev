@@ -44,9 +44,9 @@ RUN \
 
 # Install hub.
 RUN \
-  curl -L https://github.com/github/hub/releases/download/v2.12.8/hub-linux-amd64-2.12.8.tgz | tar -xzv && \
-  hub-linux-amd64-2.12.8/install && \
-  rm -rv hub-linux-amd64-2.12.8
+  curl -L https://github.com/github/hub/releases/download/v2.13.0/hub-linux-amd64-2.13.0.tgz | tar -xzv && \
+  hub-linux-amd64-2.13.0/install && \
+  rm -rv hub-linux-amd64-2.13.0
 
 # Install Terraform Language Server in the home dir because the Terraform plugin
 # writes other files to the same directory and needs permission.
