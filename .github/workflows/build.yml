@@ -21,11 +21,9 @@ jobs:
             --tag docker.pkg.github.com/$GITHUB_REPOSITORY/dev:latest \
 
       - name: Publish the docker image
-        env: # Or as an environment variable
-          DOCKER_USERNAME: ${{ secrets.DockerUsername }}
         if: github.ref == 'refs/heads/master'
         run: |
-          echo "$DOCKER_PASSWORD" | docker login -u "$GITHUB_TOKEN" --password-stdin
+          echo "$GITHUB_TOKEN" | docker login -u "$GITHUB_ACTOR" --password-stdin
           docker push docker.pkg.github.com/$GITHUB_REPOSITORY/dev:$GITHUB_SHA &
           docker push docker.pkg.github.com/$GITHUB_REPOSITORY/dev:latest &
           wait
