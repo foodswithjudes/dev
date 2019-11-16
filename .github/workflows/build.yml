@@ -1,0 +1,31 @@
+name: dev
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: Build the docker image
+        env:
+          DOCKER_CLI_EXPERIMENTAL: enabled
+        run: |
+          docker buildx build dev/ \
+            --tag docker.pkg.github.com/$GITHUB_REPOSITORY/dev:$GITHUB_SHA \
+            --tag docker.pkg.github.com/$GITHUB_REPOSITORY/dev:latest \
+
+      - name: Publish the docker image
+        env: # Or as an environment variable
+          DOCKER_USERNAME: ${{ secrets.DockerUsername }}
+        if: github.ref == 'refs/heads/master'
+        run: |
+          echo "$DOCKER_PASSWORD" | docker login -u "$GITHUB_TOKEN" --password-stdin
+          docker push docker.pkg.github.com/$GITHUB_REPOSITORY/dev:$GITHUB_SHA &
+          docker push docker.pkg.github.com/$GITHUB_REPOSITORY/dev:latest &
+          wait

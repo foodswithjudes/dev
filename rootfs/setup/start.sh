@@ -22,7 +22,7 @@ fi
 # if [ ! -d "/fwj" ]
 # then
 #   echo "/fwj is empty - cloning repository..."
-#   git clone https://github.com/katcheCode/foodswithjudes.git /fwj
+#   git clone https://github.com/katcheCode/fwj.git /fwj
 # fi
 
 # Kick off final shell as the user.

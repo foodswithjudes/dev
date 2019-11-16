@@ -1,10 +1,17 @@
 # syntax = docker/dockerfile:1.0-experimental
 FROM ubuntu:19.04
 
-RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
+# Setup environment.
+ENV GO111MODULE on
+ENV GOPATH /home/dev/go
+ENV GOROOT /usr/local/go
+ENV PATH $PATH:$GOROOT/bin:$GOPATH/bin:/home/dev/.terraform-lsp
+ENV DOCKER_BUILDKIT 1
 
-# Install python, protoc, curl, sudo, git, unzip, man.
+# Install python, protoc, curl, sudo, git, unzip, man, docker-cli.
 RUN --mount=type=cache,target=/var/cache/apt \
+  rm -f /etc/apt/apt.conf.d/docker-clean \ 
+  echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache && \
   apt-get update && \
   apt-get install -y \
   python3-dev=3.7.3-1 \
@@ -16,8 +23,20 @@ RUN --mount=type=cache,target=/var/cache/apt \
   unzip=6.0-22ubuntu1 \
   manpages=4.16-1 \
   clang-format=1:8.0-48~exp1ubuntu1 \
-  vim=2:8.1.0320-1ubuntu3.1
-
+  vim=2:8.1.0320-1ubuntu3.1 \
+  apt-transport-https \
+  ca-certificates \
+  gnupg-agent \
+  software-properties-common && \
+  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add - && \
+  add-apt-repository \
+  "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
+  $(lsb_release -cs) \
+  stable" && \
+  apt-get update && \
+  apt-cache madison docker-ce && \
+  apt-get install \
+  docker-ce-cli=5:19.03.0~3-0~ubuntu-disco
 
 # Create the group and user with sudo access.
 RUN \
@@ -35,12 +54,6 @@ RUN \
 #   apt-get update && \
 #   apt-get install -y \
 #     podman=1.6.1-1~ubuntu19.04~ppa3 && \
-
-# Install the docker client.
-RUN \
-  curl https://download.docker.com/linux/static/stable/x86_64/docker-19.03.4.tgz | tar -xzv && \
-  mv docker/docker /usr/local/bin/ && \
-  rm -rv docker
 
 # Install hub.
 RUN \
@@ -68,14 +81,6 @@ RUN \
   /usr/bin/unzip packer.zip -d /usr/local/bin/ && \
   rm packer.zip
 
-
-# Setup Go and Python environments.
-ENV GO111MODULE on
-ENV GOPATH /home/dev/go
-ENV GOROOT /usr/local/go
-ENV PATH $PATH:$GOROOT/bin:$GOPATH/bin:/home/dev/.terraform-lsp
-ENV DOCKER_BUILDKIT=1
-
 # Install Go, setup GOPATH.
 RUN \
   curl https://dl.google.com/go/go1.13.3.linux-amd64.tar.gz | tar -xzvC /usr/local/ && \
@@ -84,9 +89,7 @@ RUN \
 # Install Go dev tools.
 RUN --mount=type=cache,target=/home/dev/go/src/mod/cache \
   go get -v \
-  github.com/ramya-rao-a/go-outline@7182a932836a71948db4a81991a494751eccfe77 \
-  golang.org/x/tools/gopls@846f856e7d713bd2e8112adf3b8649d7bb111cca \
-  golang.org/x/tools/cmd/goimports@846f856e7d713bd2e8112adf3b8649d7bb111cca \
+  golang.org/x/tools/gopls@v0.2.1 \
   github.com/gogo/protobuf/protoc-gen-gogofaster@v1.3.0 \
   github.com/robertkrimen/godocdown/godocdown@0bfa0490548148882a54c15fbc52a621a9f50cbe 2>&1
 
@@ -99,6 +102,11 @@ COPY rootfs/ /
 
 # Make dev owner of all files installed in its home directory.
 RUN chown -R dev:dev /home/dev
+
+# Setup docker buildx.
+RUN \
+  docker buildx create --name builder --use && \
+  docker buildx install
 
 # start.sh handles all user-specific setup that can't be done at image build 
 # time.
