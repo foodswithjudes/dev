@@ -19,7 +19,7 @@ jobs:
 
       - name: Build the docker image
         run: |
-          docker buildx build --load dev/ \
+          docker buildx build --load . \
             --tag docker.pkg.github.com/$GITHUB_REPOSITORY/dev:$GITHUB_SHA \
             --tag docker.pkg.github.com/$GITHUB_REPOSITORY/dev:latest \
 
