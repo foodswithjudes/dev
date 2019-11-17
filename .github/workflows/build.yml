@@ -23,6 +23,11 @@ jobs:
             --tag docker.pkg.github.com/$GITHUB_REPOSITORY/dev:$GITHUB_SHA \
             --tag docker.pkg.github.com/$GITHUB_REPOSITORY/dev:latest \
 
+      - name: Set up Docker Buildx
+        uses: crazy-max/ghaction-docker-buildx@v1
+        with:
+          version: v0.3.1
+
       - name: Publish the docker image
         if: github.ref == 'refs/heads/master'
         run: |
