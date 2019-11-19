@@ -3,7 +3,9 @@ name: dev
 on:
   push:
     branches:
-      - master
+      - "**"
+    tags:
+      - "**"
 
 jobs:
   build:
@@ -21,12 +23,16 @@ jobs:
         run: |
           docker buildx build --load . \
             --tag docker.pkg.github.com/$GITHUB_REPOSITORY/dev:$GITHUB_SHA \
-            --tag docker.pkg.github.com/$GITHUB_REPOSITORY/dev:latest \
+            --tag docker.pkg.github.com/$GITHUB_REPOSITORY/dev:${GITHUB_REF#"refs/heads/"} \
+            --tag docker.pkg.github.com/$GITHUB_REPOSITORY/dev:latest
 
       - name: Publish the docker image
-        if: github.ref == 'refs/heads/master'
         run: |
-          echo "$GITHUB_TOKEN" | docker login -u "$GITHUB_ACTOR" --password-stdin
+          echo '${{ secrets.GITHUB_TOKEN }}' | docker login -u "x-access-token" --password-stdin
           docker push docker.pkg.github.com/$GITHUB_REPOSITORY/dev:$GITHUB_SHA &
-          docker push docker.pkg.github.com/$GITHUB_REPOSITORY/dev:latest &
+          docker push docker.pkg.github.com/$GITHUB_REPOSITORY/dev:${GITHUB_REF#"refs/heads/"} &
+          # Only push the :latest tag for builds on master
+          if [ "$GITHUB_REF" = "refs/heads/master" ]; then
+            docker push docker.pkg.github.com/$GITHUB_REPOSITORY/dev:latest &
+          fi
           wait
