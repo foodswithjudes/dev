@@ -21,18 +21,21 @@ jobs:
 
       - name: Build the docker image
         run: |
-          docker buildx build --load . \
-            --tag docker.pkg.github.com/$GITHUB_REPOSITORY/dev:$GITHUB_SHA \
-            --tag docker.pkg.github.com/$GITHUB_REPOSITORY/dev:${GITHUB_REF#"refs/heads/"} \
-            --tag docker.pkg.github.com/$GITHUB_REPOSITORY/dev:latest
-
-      - name: Publish the docker image
-        run: |
+          # Login to this repo's Docker registry.
           echo '${{ secrets.GITHUB_TOKEN }}' | docker login -u "x-access-token" --password-stdin
-          docker push docker.pkg.github.com/$GITHUB_REPOSITORY/dev:$GITHUB_SHA &
-          docker push docker.pkg.github.com/$GITHUB_REPOSITORY/dev:${GITHUB_REF#"refs/heads/"} &
-          # Only push the :latest tag for builds on master
-          if [ "$GITHUB_REF" = "refs/heads/master" ]; then
-            docker push docker.pkg.github.com/$GITHUB_REPOSITORY/dev:latest &
-          fi
-          wait
+
+          # Calculate docker tags
+          DOCKER_REPO="docker.pkg.github.com/$GITHUB_REPOSITORY/dev"
+          # Coalesce the git ref into a valid docker tag by replacing '/'
+          # with '_', replacing all other invalid characters with '-', and
+          # truncating to 128 characters.
+          REF_TAG="$(echo ${GITHUB_REF#"refs/heads/"} | tr '/', '_' | tr -c '[:alnum:]._-' '-' | cut -c 1-128)"
+
+          # Build and push, only adding the latest tag for builds on master.
+          docker buildx build . \
+            --push \
+            --cache-to "$DOCKER_REPO:cache" \
+            --cache-from "$DOCKER_REPO:cache" \
+            --tag "$DOCKER_REPO:$SHA_TAG" \
+            --tag "$DOCKER_REPO:$GITHUB_SHA" \
+            $([ "$GITHUB_REF" = "refs/heads/master" ] && echo "--tag $DOCKER_REPO:latest" || echo "")
