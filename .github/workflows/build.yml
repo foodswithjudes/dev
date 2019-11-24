@@ -3,9 +3,9 @@ name: dev
 on:
   push:
     branches:
-      - "**"
+      - '**'
     tags:
-      - "**"
+      - '**'
 
 jobs:
   build:
@@ -22,20 +22,20 @@ jobs:
       - name: Build the docker image
         run: |
           # Login to this repo's Docker registry.
-          echo '${{ secrets.GITHUB_TOKEN }}' | docker login -u "x-access-token" --password-stdin
+          docker login -u '${{ secrets.DOCKER_USERNAME }}' -p '${{ secrets.DOCKER_PASSWORD }}' > /dev/null
 
           # Calculate docker tags
-          DOCKER_REPO="docker.pkg.github.com/$GITHUB_REPOSITORY/dev"
+          DOCKER_REPO="foodswithjudes/dev"
           # Coalesce the git ref into a valid docker tag by replacing '/'
           # with '_', replacing all other invalid characters with '-', and
           # truncating to 128 characters.
-          REF_TAG="$(echo ${GITHUB_REF#"refs/heads/"} | tr '/', '_' | tr -c '[:alnum:]._-' '-' | cut -c 1-128)"
+          REF_TAG="$(printf '%s' ${GITHUB_REF#"refs/heads/"} | cut -c 1-128 | tr '/', '_' | tr -c '[:alnum:]._-' '-')"
 
           # Build and push, only adding the latest tag for builds on master.
           docker buildx build . \
+            --cache-from=foodswithjudes/dev:cache \
+            --cache-to=foodswithjudes/dev:cache \
             --push \
-            --cache-to "$DOCKER_REPO:cache" \
-            --cache-from "$DOCKER_REPO:cache" \
-            --tag "$DOCKER_REPO:$SHA_TAG" \
             --tag "$DOCKER_REPO:$GITHUB_SHA" \
-            $([ "$GITHUB_REF" = "refs/heads/master" ] && echo "--tag $DOCKER_REPO:latest" || echo "")
+            --tag "$DOCKER_REPO:$REF_TAG" \
+            $([ "$GITHUB_REF" = "refs/heads/master" ] && echo "--tag=$DOCKER_REPO:latest" || echo "")
