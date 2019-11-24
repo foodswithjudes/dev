@@ -1,0 +1,44 @@
+name: mirror
+
+on:
+  push:
+    branches:
+      - master
+      - "**/test-workflows"
+
+jobs:
+  dev:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup SSH Keys, known_hosts, and git config
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
+          echo "${{ secrets.SYNC_SSH_KEY }}" > ~/.ssh/id_rsa_sync
+          echo "${{ secrets.MIRROR_SSH_KEY }}" > ~/.ssh/id_rsa_mirror
+          chmod 600 ~/.ssh/id_rsa*
+          echo "
+          Host github-sync
+                  HostName github.com
+                  User git
+                  IdentityFile ~/.ssh/id_rsa_sync
+          Host github-mirror
+                  HostName github.com
+                  User git
+                  IdentityFile ~/.ssh/id_rsa_mirror
+          " > ~/.ssh/config
+          git config --global user.email "mirror-bot@foodswithjudes.com"
+          git config --global user.name "Mirror Bot"
+
+      - name: Checkout
+        run: |
+          git clone --single-branch --branch=${GITHUB_REF#"refs/heads/"} git@github-mirror:katcheCode/fwj.git ./
+
+      - name: Merge Mirror
+        run: |
+          GITHUB_BRANCH=${GITHUB_REF#"refs/heads/"}
+          git remote add mirror git@github-sync:$GITHUB_REPOSITORY.git
+          git subtree pull --prefix=public/dev --rejoin --annotate '[dev] ' mirror $GITHUB_BRANCH
+          git subtree push --prefix=public/dev --rejoin mirror $GITHUB_BRANCH
+          git push origin HEAD:$GITHUB_BRANCH
