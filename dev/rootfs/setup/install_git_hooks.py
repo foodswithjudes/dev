@@ -5,12 +5,12 @@ import stat
 from os.path import join, splitext
 from shutil import copyfile
 
-# Remove extensions as files are copied from /githooks/* to /fwj/.git/hooks/*
+# Remove extensions as files are copied from /githooks/* to /src/.git/hooks/*
 for (dirpath, dirnames, filenames) in os.walk("/setup/githooks"):
     for file in filenames:
         src = join("/setup", "githooks", dirpath, file)
         filename, _ = splitext(file)
-        dst = join("/fwj", ".git", "hooks", filename)
+        dst = join("/src", ".git", "hooks", filename)
         copyfile(src, dst)
         # Set executable bit of copied file
         st = os.stat(dst)

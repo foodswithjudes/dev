@@ -1,0 +1,34 @@
+version: '3.3'
+services:
+  dev:
+    build: dev
+    volumes:
+      - type: bind
+        source: .
+        target: /src
+      # Mount a volume over where containers are stored to allow overlayfs to work.
+      # - tmp:/var/lib/containers
+      # Bind in the docker daemon socket so the docker client can access it.
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+    stdin_open: true
+    tty: true
+    user: dev
+    working_dir: /src
+    hostname: dev
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - seccomp:unconfined
+
+  devsetup:
+    build: devsetup
+    volumes:
+      - type: bind
+        source: .
+        target: /src
+
+    working_dir: /src
+# volumes:
+#   tmp: {}

@@ -7,6 +7,7 @@ ENV GOPATH /home/dev/go
 ENV GOROOT /usr/local/go
 ENV PATH $PATH:$GOROOT/bin:$GOPATH/bin:/home/dev/.terraform-lsp
 ENV DOCKER_BUILDKIT 1
+ENV COMPOSE_DOCKER_CLI_BUILD 1
 
 # Install python, protoc, curl, sudo, git, unzip, man, docker-cli.
 RUN --mount=type=cache,target=/var/cache/apt \
@@ -96,6 +97,11 @@ RUN --mount=type=cache,target=/home/dev/go/src/mod/cache \
 # Install python dev tools.
 RUN \
   pip3 install -U black==19.3b0 pylint==2.4.2 --system
+
+# Install docker-compose
+RUN \
+  curl -L "https://github.com/docker/compose/releases/download/1.25.0/docker-compose-linux-x86_64" -o /usr/local/bin/docker-compose && \
+  chmod +x /usr/local/bin/docker-compose
 
 # Copy custom files into container.
 COPY rootfs/ /

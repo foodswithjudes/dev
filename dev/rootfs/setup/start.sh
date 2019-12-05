@@ -3,9 +3,9 @@
 set -e
 
 # Setup user defaults.
-USER_UID=${FWJ_DEV_USER_UID:-1000}
-USER_GID=${FWJ_DEV_USER_GID:-$USER_UID}
-USER_SHELL=${FWJ_DEV_USER_SHELL:-/bin/bash}
+USER_UID=${DEV_USER_UID:-1000}
+USER_GID=${DEV_USER_GID:-$USER_UID}
+USER_SHELL=${DEV_USER_SHELL:-/bin/bash}
 
 # Fix group of the docker daemon socket
 chgrp dev /var/run/docker.sock
@@ -19,13 +19,13 @@ if ! [ $(id -u dev) = $USER_UID ] || ! [ $(id -g dev) = $USER_GID ]; then
 fi
 
 # Clone the repository if it wasn't mounted into /fwj
-# if [ ! -d "/fwj" ]
+# if [ ! -d "/src" ]
 # then
-#   echo "/fwj is empty - cloning repository..."
+#   echo "/src is empty - cloning repository..."
 #   git clone https://github.com/katcheCode/fwj.git /fwj
 # fi
 
 # Kick off final shell as the user.
-cd /fwj
+cd /src
 exec sudo -E --preserve-env=PATH -u dev "$USER_SHELL"
 

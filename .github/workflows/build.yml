@@ -26,10 +26,10 @@ jobs:
 
           # Calculate docker tags
           DOCKER_REPO="foodswithjudes/dev"
-          # Coalesce the git ref into a valid docker tag by replacing '/'
-          # with '_', replacing all other invalid characters with '-', and
-          # truncating to 128 characters.
-          REF_TAG="$(printf '%s' ${GITHUB_REF#"refs/heads/"} | cut -c 1-128 | tr '/', '_' | tr -c '[:alnum:]._-' '-')"
+          # Coalesce the git ref into a valid docker tag by removing newlines,
+          # replacing '/' with '_', replacing all other invalid characters with
+          # '-', and truncating to 128 characters.
+          REF_TAG="$(echo ${GITHUB_REF#"refs/heads/"} | cut -c 1-128 | tr --delete '\n' | tr '/', '_' | tr -c '[:alnum:]._-' '-')"
 
           # Build and push, only adding the latest tag for builds on master.
           docker buildx build . \
