@@ -32,7 +32,7 @@ jobs:
           REF_TAG="$(echo ${GITHUB_REF#"refs/heads/"} | cut -c 1-128 | tr --delete '\n' | tr '/', '_' | tr -c '[:alnum:]._-' '-')"
 
           # Build and push, only adding the latest tag for builds on master.
-          docker buildx build . \
+          docker buildx build dev \
             --cache-from=foodswithjudes/dev:cache \
             --cache-to=foodswithjudes/dev:cache \
             --push \
